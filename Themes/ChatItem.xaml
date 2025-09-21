@@ -37,12 +37,13 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        
         <Style.Resources>
             <ControlTemplate x:Key="CustomRow">
                 <StackPanel Orientation="Horizontal">
                     <Label Content="{Binding Message}"
                            Foreground="White"
-                           Margin="40,-2,0,-2"/> "
+                           Margin="40,-2,0,-2"/>
                 </StackPanel>
                 
             </ControlTemplate>

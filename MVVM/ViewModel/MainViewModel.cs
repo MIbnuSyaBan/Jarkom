@@ -38,7 +38,7 @@ namespace Jarkom.MVVM.ViewModel
             set 
             { 
                 _message = value;
-                OnPropertyChanged();
+                OnPropertyChanged(); 
             }
 
         }
@@ -70,42 +70,9 @@ namespace Jarkom.MVVM.ViewModel
                 IsNativeOrigin = false,
                 FirstMessage = true
             });
-            for (int i = 0; i < 3; i++)
-            {
-                Messages.Add(new MessageModel()
-                {
-                    Username = "X",
-                    UsernameColor = "#409AFF",
-                    ImageSource = "https://i.imgur.com/yMWvLXd.png",
-                    Message = "I'm fine, thank you!",
-                    Time = DateTime.Now,
-                    IsNativeOrigin = false,
-                    FirstMessage = false
-                });
-            }
-            for (int i = 0; i < 2; i++)
-            {
-                Messages.Add(new MessageModel()
-                {
-                    Username = "Lupopou",
-                    UsernameColor = "#409AFF",
-                    ImageSource = "https://i.imgur.com/yMWvLXd.png",
-                    Message = "What about you?",
-                    Time = DateTime.Now,
-                    IsNativeOrigin = true,
-                });
-            }
-            Messages.Add(new MessageModel()
-            {
-                Username = "Lupopou",
-                UsernameColor = "#409AFF",
-                ImageSource = "https://i.imgur.com/yMWvLXd.png",
-                Message = "Last",
-                Time = DateTime.Now,
-                IsNativeOrigin = true,
-            });
 
-            for (int i = 0; i < 5; i++)
+
+            for (int i = 0; i < 1; i++)
             {
                 Contacts.Add(new ContactsModel()
                 {
