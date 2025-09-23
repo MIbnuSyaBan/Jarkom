@@ -1,4 +1,5 @@
-﻿using Jarkom.Core;
+﻿using ChatClient.Net;
+using Jarkom.Core;
 using Jarkom.MVVM.Model;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,8 @@ namespace Jarkom.MVVM.ViewModel
         public ObservableCollection<ContactsModel> Contacts { get; set; }
         //Commands
         public RelayCommand SendCommand { get; set; }
+        public RelayCommand ConnectToServerCommand { get; set; }
+        private Server _server;
 
         private ContactsModel _selectedContact;
 
@@ -47,7 +50,10 @@ namespace Jarkom.MVVM.ViewModel
         {
             Messages = new ObservableCollection<MessageModel>();
             Contacts = new ObservableCollection<ContactsModel>();
-
+            _server = new Server();
+            //_server.ConnectToServer();
+            ConnectToServerCommand = new RelayCommand(o => _server.ConnectToServer());
+             
             SendCommand = new RelayCommand(o =>
             {
                 Messages.Add(new MessageModel
@@ -69,6 +75,16 @@ namespace Jarkom.MVVM.ViewModel
                 Time = DateTime.Now,
                 IsNativeOrigin = false,
                 FirstMessage = true
+            });
+            Messages.Add(new MessageModel()
+            {
+                Username = "Lupopou",
+                UsernameColor = "#409AFF",
+                ImageSource = "https://i.imgur.com/yMWvLXd.png",
+                Message = "fine",
+                Time = DateTime.Now,
+                IsNativeOrigin = true,
+                FirstMessage = false
             });
 
 
