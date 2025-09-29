@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="BackEnd\**" />
+    <EmbeddedResource Remove="BackEnd\**" />
+    <None Remove="BackEnd\**" />
+    <Page Remove="BackEnd\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Icons\camera.png" />
     <None Remove="Icons\phone.png" />
     <None Remove="Icons\plus.png" />
