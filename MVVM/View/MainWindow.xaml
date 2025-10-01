@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Jarkom" 
         xmlns:viewmodel="clr-namespace:Jarkom.MVVM.ViewModel"
         mc:Ignorable="d"
         Height="650" Width="1200"
@@ -18,7 +17,11 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <!-- Tambahan Row baru untuk panel koneksi -->
+            <RowDefinition Height="Auto"/>
+            <!-- Row lama: TopBar -->
             <RowDefinition Height="25"/>
+            <!-- Row lama: Content (Sidebar + Chat) -->
             <RowDefinition/>
         </Grid.RowDefinitions>
 
@@ -27,8 +30,29 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!-- TopBar -->
-        <Border Grid.ColumnSpan="2"
+        <!-- ===== Connection Panel Baru ===== -->
+        <Border Grid.Row="0" Grid.ColumnSpan="2"
+                Background="#EEE"
+                Padding="5" Margin="0,0,0,2">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Host:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBox Text="{Binding Host}" Width="120" Margin="5,0"/>
+
+                <TextBlock Text="Port:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBox Text="{Binding Port}" Width="60" Margin="5,0"/>
+
+                <TextBlock Text="Username:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBox Text="{Binding Username}" Width="120" Margin="5,0"/>
+
+                <Button Content="Connect"
+                        Command="{Binding ConnectCommand}" Margin="5,0"/>
+                <Button Content="Disconnect"
+                        Command="{Binding DisconnectCommand}" Margin="5,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== TopBar ===== -->
+        <Border Grid.Row="1" Grid.ColumnSpan="2"
                 Background="{DynamicResource TopBarBackgroundBrush}"
                 MouseDown="Border_MouseDown">
             <Grid HorizontalAlignment="Stretch">
@@ -66,9 +90,9 @@
             </Grid>
         </Border>
 
-        <!-- SideBar -->
+        <!-- ===== SideBar ===== -->
         <Grid Background="{DynamicResource SidebarBackgroundBrush}"
-              Grid.Row="1">
+              Grid.Row="2" Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
                 <RowDefinition/>
@@ -111,8 +135,8 @@
             </StackPanel>
         </Grid>
 
-        <!-- Chat Area -->
-        <Grid Grid.Column="1" Grid.Row="1">
+        <!-- ===== Chat Area ===== -->
+        <Grid Grid.Column="1" Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
                 <RowDefinition/>
@@ -172,7 +196,7 @@
 
                 <TextBox Grid.Row="1"
                          Height="50"
-                         Text="Message @Username"
+                         Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"
                          Style="{StaticResource MessageBox}"
                          Grid.ColumnSpan="2"/>
 
@@ -186,10 +210,15 @@
                            RenderOptions.BitmapScalingMode="Fant"
                            Margin="5,5,5,0"/>
 
-                    <Image Source="/Icons/send.png"
-                           Width="20" Height="20"
-                           RenderOptions.BitmapScalingMode="Fant"
-                           Margin="5,5,16,0"/>
+                    <Button Width="40" Height="40"
+                            Command="{Binding SendCommand}"
+                            Background="Transparent"
+                            BorderThickness="0">
+                        <Image Source="/Icons/send.png"
+                               Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="Fant"
+                               Margin="5,5,16,0"/>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Grid>
