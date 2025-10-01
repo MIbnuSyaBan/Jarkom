@@ -51,7 +51,7 @@ namespace Jarkom.MVVM.ViewModel
             Messages = new ObservableCollection<MessageModel>();
             Contacts = new ObservableCollection<ContactsModel>();
             _server = new Server();
-            //_server.ConnectToServer();
+            _server.ConnectToServer();
             ConnectToServerCommand = new RelayCommand(o => _server.ConnectToServer());
              
             SendCommand = new RelayCommand(o =>
