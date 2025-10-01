@@ -91,23 +91,39 @@
             <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
                         Background="{DynamicResource FooterBackgroundBrush}">
-
+                
                 <Border CornerRadius="25"
                         Width="30" Height="30"
                         Background="#3bff6f"
                         Margin="18,0,0,0"/>
-                <StackPanel VerticalAlignment="Center">
-                    <Label Content="Username"
-                           Foreground="{DynamicResource AppPrimaryTextBrush}"
-                           FontWeight="SemiBold"
-                           Margin="0,-5,0,-5"/>
+                        
+                <StackPanel VerticalAlignment="Center"
+                            Width="120">
+                    <Grid Margin="0,-5,0,-5">
+                        <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Foreground="{DynamicResource AppPrimaryTextBrush}"
+                                 FontWeight="SemiBold"/>
+                    </Grid>
 
-                    <Label Content="Custom Status"
+                    <Label Content="{Binding ConnectionStatus}"
                            Foreground="{DynamicResource AppSecondaryTextBrush}"
                            FontWeight="SemiBold"
                            FontSize="10"
-                           Margin="0,-8,0,-5"/>
+                           Margin="-2,-5,0,-5"/>
                 </StackPanel>
+
+                <Button Command="{Binding ConnectCommand}"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="ButtonConnect_Click"
+                        VerticalAlignment="Center"
+                        Margin="0,0,0,0">
+                    <Image Source="{Binding ConnectionIcon}"
+                           Width="20"
+                           Height="20"/>
+                </Button>
             </StackPanel>
         </Grid>
 

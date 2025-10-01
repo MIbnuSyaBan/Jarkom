@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace Jarkom.MVVM.ViewModel
 {
@@ -14,11 +15,58 @@ namespace Jarkom.MVVM.ViewModel
     {
         public ObservableCollection<MessageModel> Messages { get; set; }
         public ObservableCollection<ContactsModel> Contacts { get; set; }
-        //Commands
-        public RelayCommand SendCommand { get; set; }
-        public RelayCommand ConnectToServerCommand { get; set; }
         private Server _server;
 
+        private string _username = "Username";
+        public string Username
+        {
+            get { return _username; }
+            set 
+            { 
+                _username = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _connectionStatus = "Unconnected";
+        public string ConnectionStatus
+        {
+            get { return _connectionStatus; }
+            set 
+            { 
+                _connectionStatus = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _connectionIcon = "/Icons/shutdown.png";
+        public string ConnectionIcon
+        {
+            get { return _connectionIcon; }
+            set
+            {
+                _connectionIcon = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isConnected;
+        public bool IsConnected
+        {
+            get { return _isConnected; }
+            set
+            {
+                _isConnected = value;
+                ConnectionStatus = value ? "Connected" : "Unconnected";
+                ConnectionIcon = value ? "/Icons/shutdownActive.png" : "/Icons/shutdown.png";
+                OnPropertyChanged();
+            }
+        }
+
+        //Commands
+        public RelayCommand SendCommand { get; set; }
+        public RelayCommand ConnectCommand { get; set; }
+        
         private ContactsModel _selectedContact;
 
         public ContactsModel SelectedContact
@@ -45,25 +93,41 @@ namespace Jarkom.MVVM.ViewModel
             }
 
         }
-
+         
         public MainViewModel()
         {
             Messages = new ObservableCollection<MessageModel>();
             Contacts = new ObservableCollection<ContactsModel>();
             _server = new Server();
-            //_server.ConnectToServer();
-            ConnectToServerCommand = new RelayCommand(o => _server.ConnectToServer());
+            
+            ConnectCommand = new RelayCommand(o =>
+            {
+                try
+                {
+                    _server.ConnectToServer();
+                    IsConnected = true;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Connection failed: {ex.Message}");
+                    IsConnected = false;
+                }
+            });
              
             SendCommand = new RelayCommand(o =>
             {
+                if (string.IsNullOrEmpty(Message)) return;
+                
                 Messages.Add(new MessageModel
                 {
+                    Username = Username,
                     Message = Message,
                     FirstMessage = false
                 });
 
                 Message = "";
             });
+
 
             Messages.Add(new MessageModel()
             {

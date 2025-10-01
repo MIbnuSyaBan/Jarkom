@@ -36,6 +36,12 @@ namespace Jarkom
                 : WindowState.Maximized;
         }
 
+        private void ButtonConnect_Click(object sender, RoutedEventArgs e)
+        {
+            // The actual connection logic is handled by the ConnectCommand in ViewModel
+            // This method is only needed for the Click event binding
+        }
+
         private void ButtonClose_CLick(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
