@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -99,21 +100,25 @@ namespace Jarkom.MVVM.ViewModel
             Messages = new ObservableCollection<MessageModel>();
             Contacts = new ObservableCollection<ContactsModel>();
             _server = new Server();
-            
-            ConnectCommand = new RelayCommand(o =>
-            {
-                try
+            _server.ConnectedEvent += userConected;
+
+            ConnectCommand = new RelayCommand(
+                o =>
                 {
-                    _server.ConnectToServer();
-                    IsConnected = true;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Connection failed: {ex.Message}");
-                    IsConnected = false;
-                }
-            });
-             
+                    try
+                    {
+                        _server.ConnectToServer(Username);
+                        IsConnected = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Connection failed: {ex.Message}");
+                        IsConnected = false;
+                    }
+                },
+                o => !string.IsNullOrEmpty(Username) // ini sama seperti di contoh pertama
+            );
+
             SendCommand = new RelayCommand(o =>
             {
                 if (string.IsNullOrEmpty(Message)) return;
@@ -126,54 +131,20 @@ namespace Jarkom.MVVM.ViewModel
                 });
 
                 Message = "";
-            });
-
-
-            Messages.Add(new MessageModel()
+            });      
+        }
+        private void userConected()
+        {
+            var user = new ContactsModel()
             {
-                Username = "System",
-                UsernameColor = "#888888",
-                ImageSource = "https://i.imgur.com/yMWvLXd.png", // Or use a system/default icon
-                Message = "Lupopou has joined the chat.",
-                Time = DateTime.Now,
-                IsNativeOrigin = false,
-                FirstMessage = true,
-                IsNotification = true
-            });
+                Username = _server.PacketReader.ReadMessage(),
+                UID = _server.PacketReader.ReadMessage(),
+                ImageSource = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5_EzMa6j7ppq2LoxtTIDQMNIfZhjYpy2Vfg&s",
+            };
 
-
-            Messages.Add(new MessageModel()
+            if (!Contacts.Any(x => x.UID == user.UID))
             {
-                Username = "Lupopou",
-                UsernameColor = "#409AFF",
-                ImageSource = "https://i.imgur.com/yMWvLXd.png",
-                Message = "Hello, how are you?",
-                Time = DateTime.Now,
-                IsNativeOrigin = false,
-                FirstMessage = true,
-                IsNotification = false
-            });
-            Messages.Add(new MessageModel()
-            {
-                Username = "Lupopou",
-                UsernameColor = "#409AFF",
-                ImageSource = "https://i.imgur.com/yMWvLXd.png",
-                Message = "fine",
-                Time = DateTime.Now,
-                IsNativeOrigin = true,
-                FirstMessage = false,
-                IsNotification = false
-            });
-
-
-            for (int i = 0; i < 1; i++)
-            {
-                Contacts.Add(new ContactsModel()
-                {
-                    Username = $"Lupopou {i}",
-                    ImageSource = "https://i.imgur.com/yMWvLXd.png",
-                    Messages = Messages
-                });
+                Application.Current.Dispatcher.Invoke(() => Contacts.Add(user));
             }
         }
     }
