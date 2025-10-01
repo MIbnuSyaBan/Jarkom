@@ -14,16 +14,44 @@ namespace ChatServer
         public Guid UID { get; set; }
         public TcpClient ClientSocket { get; set; }
 
-        PacketReader _packedReader;
+        PacketReader _packetReader;
         public Client(TcpClient client)
         {
             ClientSocket = client;
             UID = Guid.NewGuid();
-            _packedReader = new PacketReader(ClientSocket.GetStream());
+            _packetReader = new PacketReader(ClientSocket.GetStream());
 
-            var opcode = _packedReader.ReadByte();
-            Username = _packedReader.ReadMessage();
+            var opcode = _packetReader.ReadByte();
+            Username = _packetReader.ReadMessage();
             Console.WriteLine($"[{DateTime.Now}]: Client has connected with the username: {Username}");
+            Task.Run(() => Process());
+        }
+        void Process()
+        {
+            while (true)
+            {
+                try
+                {
+                    var opcode = _packetReader.ReadByte();
+                    switch (opcode)
+                    {
+                        case 5:
+                            var msg = _packetReader.ReadMessage();
+                            Console.WriteLine($"{DateTime.Now}: Message received! {msg}");
+                            Program.BroadcastMessage("msg");
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine($"[{DateTime.Now}]: Client {Username} has disconnected.");
+                    Program.BroadcastDisconnect(UID.ToString());
+                    ClientSocket.Close();
+                    break;
+                }
+            }
         }
     }
 }

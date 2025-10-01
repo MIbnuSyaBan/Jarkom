@@ -101,6 +101,8 @@ namespace Jarkom.MVVM.ViewModel
             Contacts = new ObservableCollection<ContactsModel>();
             _server = new Server();
             _server.ConnectedEvent += userConected;
+            _server.MsgReceiveEvent += MessamgeRecieve;
+            _server.UserDisconnectedEvent += RemoveUser;
 
             ConnectCommand = new RelayCommand(
                 o =>
@@ -116,22 +118,18 @@ namespace Jarkom.MVVM.ViewModel
                         IsConnected = false;
                     }
                 },
-                o => !string.IsNullOrEmpty(Username) // ini sama seperti di contoh pertama
+                o => !string.IsNullOrEmpty(Username) 
             );
 
-            SendCommand = new RelayCommand(o =>
-            {
-                if (string.IsNullOrEmpty(Message)) return;
-                
-                Messages.Add(new MessageModel
+            SendCommand = new RelayCommand(
+                o =>
                 {
-                    Username = Username,
-                    Message = Message,
-                    FirstMessage = false
-                });
-
-                Message = "";
-            });      
+                    if (string.IsNullOrEmpty(Message)) return;
+                    _server.SendMessageToServer(Message);
+                    Message = "";
+                    OnPropertyChanged();
+                }
+            );      
         }
         private void userConected()
         {
@@ -145,6 +143,45 @@ namespace Jarkom.MVVM.ViewModel
             if (!Contacts.Any(x => x.UID == user.UID))
             {
                 Application.Current.Dispatcher.Invoke(() => Contacts.Add(user));
+            }
+
+            var connectMessage = new MessageModel()
+            {
+                Message = $"{user.Username} has join the chat.",
+                IsNotification = true
+            };
+
+            Application.Current.Dispatcher.Invoke(() => Messages.Add(connectMessage));
+            OnPropertyChanged();
+        }
+
+        private void MessamgeRecieve()
+        {
+            var msg = _server.PacketReader.ReadMessage();
+            var message = new MessageModel()
+            {
+                Message = msg,
+                Time = DateTime.Now,
+                IsNativeOrigin = false
+            };
+            Application.Current.Dispatcher.Invoke(() => Messages.Add(message));
+            OnPropertyChanged();
+        }
+
+        private void RemoveUser()
+        {
+            var uid = _server.PacketReader.ReadMessage();
+            var user = Contacts.Where(x => x.UID == uid).FirstOrDefault();
+            if (user != null)
+            {
+                Application.Current.Dispatcher.Invoke(() => Contacts.Remove(user));
+                var connectMessage = new MessageModel()
+                {
+                    Message = $"{user.Username} has left the chat.",
+                    IsNotification = true
+                };
+                Application.Current.Dispatcher.Invoke(() => Messages.Add(connectMessage));
+                OnPropertyChanged();
             }
         }
     }

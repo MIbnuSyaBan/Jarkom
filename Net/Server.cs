@@ -12,6 +12,8 @@ namespace ChatClient.Net
         public PacketReader PacketReader;
 
         public event Action ConnectedEvent;
+        public event Action MsgReceiveEvent;
+        public event Action UserDisconnectedEvent;
 
         public Server()
         {
@@ -51,6 +53,12 @@ namespace ChatClient.Net
                                 case 1:
                                     ConnectedEvent?.Invoke();
                                     break;
+                                case 5:
+                                    MsgReceiveEvent?.Invoke();
+                                    break;
+                                case 10:
+                                    UserDisconnectedEvent?.Invoke();
+                                    break;
                                 default:
                                     Console.WriteLine("ah yes..");
                                     break;
@@ -73,6 +81,16 @@ namespace ChatClient.Net
                 }
             });
 
+        }
+        public void SendMessageToServer (string message)
+        {
+            if (_client.Connected)
+            {
+                var messagePacket = new PacketBuilder();
+                messagePacket.WriteOpCode(5);
+                messagePacket.WriteMessage(message);
+                _client.Client.Send(messagePacket.GetPacketBytes());
+            }
         }
     }
 }
