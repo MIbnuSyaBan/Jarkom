@@ -15,5 +15,7 @@ namespace Jarkom.MVVM.Model
         public DateTime Time { get; set; }
         public bool IsNativeOrigin { get; set; }
         public bool? FirstMessage { get; set; }
+        public bool? IsNotification { get; set; }
     }
+
 }

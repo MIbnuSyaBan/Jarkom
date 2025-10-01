@@ -43,9 +43,20 @@
                            Margin="40,-2,0,-2"/>
                 </StackPanel>
             </ControlTemplate>
+            <ControlTemplate x:Key="NotificationRow">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Label Content="{Binding Message}"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource AppPrimaryTextBrush}"
+                           Margin="0,0,0,0"/>
+                </StackPanel>
+            </ControlTemplate>
         </Style.Resources>
 
         <Style.Triggers>
+            <DataTrigger Binding="{Binding IsNotification}" Value="True">
+                <Setter Property="Template" Value="{StaticResource NotificationRow}"/>
+            </DataTrigger>
             <DataTrigger Binding="{Binding FirstMessage}" Value="False">
                 <Setter Property="Template" Value="{StaticResource CustomRow}"/>
             </DataTrigger>

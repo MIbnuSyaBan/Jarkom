@@ -65,6 +65,18 @@ namespace Jarkom.MVVM.ViewModel
                 Message = "";
             });
 
+            Messages.Add(new MessageModel()
+            {
+                Username = "System",
+                UsernameColor = "#888888",
+                ImageSource = "https://i.imgur.com/yMWvLXd.png", // Or use a system/default icon
+                Message = "Lupopou has joined the chat.",
+                Time = DateTime.Now,
+                IsNativeOrigin = false,
+                FirstMessage = true,
+                IsNotification = true
+            });
+
 
             Messages.Add(new MessageModel()
             {
@@ -74,7 +86,8 @@ namespace Jarkom.MVVM.ViewModel
                 Message = "Hello, how are you?",
                 Time = DateTime.Now,
                 IsNativeOrigin = false,
-                FirstMessage = true
+                FirstMessage = true,
+                IsNotification = false
             });
             Messages.Add(new MessageModel()
             {
@@ -84,7 +97,8 @@ namespace Jarkom.MVVM.ViewModel
                 Message = "fine",
                 Time = DateTime.Now,
                 IsNativeOrigin = true,
-                FirstMessage = false
+                FirstMessage = false,
+                IsNotification = false
             });
 
 
@@ -97,7 +111,6 @@ namespace Jarkom.MVVM.ViewModel
                     Messages = Messages
                 });
             }
-
         }
     }
 }
