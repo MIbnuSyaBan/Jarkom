@@ -4,8 +4,10 @@ using Jarkom.MVVM.Model;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Collections.Generic;
 
 namespace Jarkom.MVVM.ViewModel
 {
@@ -25,7 +27,27 @@ namespace Jarkom.MVVM.ViewModel
         public string Message
         {
             get => _message;
-            set { _message = value; OnPropertyChanged(); }
+            set
+            {
+                if (_message != value)
+                {
+                    _message = value;
+                    OnPropertyChanged();
+
+                    // indikator lokal
+                    TypingStatus = string.IsNullOrWhiteSpace(_message) ? string.Empty : "You are typing...";
+
+                    // kirim status typing ke server
+                    HandleLocalTyping();
+                }
+            }
+        }
+
+        private string _typingStatus;
+        public string TypingStatus
+        {
+            get => _typingStatus;
+            set { _typingStatus = value; OnPropertyChanged(); }
         }
 
         private string _username = "User";
@@ -55,9 +77,19 @@ namespace Jarkom.MVVM.ViewModel
 
         private readonly Server _server = new();
 
+        // ===== Typing handling =====
+        private CancellationTokenSource? _typingIdleCts;
+        private DateTime _lastTypingSent = DateTime.MinValue;
+        private bool _isTypingSent = false;
+        private readonly TimeSpan TypingIdle = TimeSpan.FromSeconds(2);
+        private readonly TimeSpan StartThrottle = TimeSpan.FromSeconds(2);
+
+        private readonly HashSet<string> _typingUsers = new();
+        private readonly Dictionary<string, CancellationTokenSource> _typingUserTimers = new();
+        private readonly TimeSpan RemoteTypingTimeout = TimeSpan.FromSeconds(4);
+
         public MainViewModel()
         {
-            // default room "General"
             Contacts.Add(new ContactsModel { Username = "General", ImageSource = "", Messages = Messages });
             SelectedContact = Contacts.First();
 
@@ -92,7 +124,6 @@ namespace Jarkom.MVVM.ViewModel
             var text = Message?.Trim();
             if (string.IsNullOrEmpty(text)) return;
 
-            // cek apakah ini private chat dari kontak yang dipilih
             string? pmTarget = null;
             if (SelectedContact != null &&
                 !string.Equals(SelectedContact.Username, "General", StringComparison.OrdinalIgnoreCase) &&
@@ -101,33 +132,39 @@ namespace Jarkom.MVVM.ViewModel
                 pmTarget = SelectedContact.Username;
             }
 
-            // kirim pesan ke server
             await _server.SendChatAsync(Username, text, pmTarget);
 
-            // tampilkan pesan lokal sekali (server tidak echo balik pengirim → aman)
+            // tampilkan dengan timestamp
             Messages.Add(new MessageModel
             {
                 Username = Username,
                 UsernameColor = "#409AFF",
-                Message = (pmTarget == null) ? text : $"(to {pmTarget}) {text}",
+                Message = $"[{DateTime.Now:HH:mm}] {(pmTarget == null ? text : $"(to {pmTarget}) {text}")}",
                 Time = DateTime.Now,
                 IsNativeOrigin = true,
                 FirstMessage = false
             });
 
+            // reset indikator
             Message = string.Empty;
+            TypingStatus = string.Empty;
+            _typingIdleCts?.Cancel();
+            _isTypingSent = false;
+            if (_server.Connected) await _server.SendTypingAsync(Username, false, pmTarget);
         }
 
         private void Server_OnMessage(WireMessage msg)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
+                DateTime time = FromUnixTime(msg.Ts);
+
                 switch (msg.Type)
                 {
                     case "sys":
                     case "join":
                     case "leave":
-                        AppendSys(RenderText(msg));
+                        AppendSys($"[{time:HH:mm}] {RenderText(msg)}");
                         break;
 
                     case "userlist":
@@ -140,14 +177,119 @@ namespace Jarkom.MVVM.ViewModel
                         {
                             Username = msg.From,
                             UsernameColor = "#90EE90",
-                            Message = msg.Text ?? "",
-                            Time = DateTime.Now,
+                            Message = $"[{time:HH:mm}] {msg.Text ?? ""}", // timestamp ditambahkan
+                            Time = time,
                             IsNativeOrigin = false,
                             FirstMessage = false
                         });
                         break;
+
+                    case "typing":
+                        HandleRemoteTyping(msg.From, !string.IsNullOrEmpty(msg.Text));
+                        break;
                 }
             });
+        }
+
+        private static DateTime FromUnixTime(long ts)
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(ts).LocalDateTime;
+        }
+
+        private void HandleLocalTyping()
+        {
+            if (!_server.Connected) return;
+
+            string? pmTarget = (SelectedContact != null &&
+                       !string.Equals(SelectedContact.Username, "General", StringComparison.OrdinalIgnoreCase) &&
+                       !string.Equals(SelectedContact.Username, Username, StringComparison.OrdinalIgnoreCase))
+                       ? SelectedContact.Username
+                       : null;
+
+            var now = DateTime.UtcNow;
+
+            if (!_isTypingSent || (now - _lastTypingSent) > StartThrottle)
+            {
+                _ = _server.SendTypingAsync(Username, true, pmTarget);
+                _isTypingSent = true;
+                _lastTypingSent = now;
+            }
+
+            _typingIdleCts?.Cancel();
+            _typingIdleCts = new CancellationTokenSource();
+            var ct = _typingIdleCts.Token;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(TypingIdle, ct);
+                    if (!ct.IsCancellationRequested)
+                    {
+                        _isTypingSent = false;
+                        await _server.SendTypingAsync(Username, false, pmTarget);
+                    }
+                }
+                catch (TaskCanceledException) { }
+            });
+        }
+
+        private void HandleRemoteTyping(string from, bool isTyping)
+        {
+            if (string.Equals(from, Username, StringComparison.OrdinalIgnoreCase)) return;
+
+            if (isTyping)
+            {
+                _typingUsers.Add(from);
+
+                if (_typingUserTimers.TryGetValue(from, out var oldCts))
+                    oldCts.Cancel();
+
+                var cts = new CancellationTokenSource();
+                _typingUserTimers[from] = cts;
+                var ct = cts.Token;
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Task.Delay(RemoteTypingTimeout, ct);
+                        if (!ct.IsCancellationRequested)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                _typingUsers.Remove(from);
+                                _typingUserTimers.Remove(from);
+                                UpdateTypingStatusText();
+                            });
+                        }
+                    }
+                    catch (TaskCanceledException) { }
+                });
+            }
+            else
+            {
+                if (_typingUserTimers.TryGetValue(from, out var c))
+                {
+                    c.Cancel();
+                    _typingUserTimers.Remove(from);
+                }
+                _typingUsers.Remove(from);
+            }
+
+            UpdateTypingStatusText();
+        }
+
+        private void UpdateTypingStatusText()
+        {
+            if (_typingUsers.Count == 0) TypingStatus = string.Empty;
+            else
+            {
+                var names = _typingUsers.Take(2).ToArray();
+                if (_typingUsers.Count == 1) TypingStatus = $"{names[0]} sedang mengetik...";
+                else if (_typingUsers.Count == 2) TypingStatus = $"{names[0]} dan {names[1]} sedang mengetik...";
+                else TypingStatus = $"{names[0]}, {names[1]} dan {_typingUsers.Count - 2} lainnya sedang mengetik...";
+            }
         }
 
         private string RenderText(WireMessage m)
@@ -176,7 +318,6 @@ namespace Jarkom.MVVM.ViewModel
 
         private void SyncUsers(string[] users)
         {
-            // pastikan kontak online sinkron dengan daftar user dari server
             foreach (var u in users)
             {
                 if (u.Equals("General", StringComparison.OrdinalIgnoreCase)) continue;
@@ -186,12 +327,11 @@ namespace Jarkom.MVVM.ViewModel
                     {
                         Username = u,
                         ImageSource = "",
-                        Messages = Messages // untuk sekarang 1 room bersama
+                        Messages = Messages
                     });
                 }
             }
 
-            // hapus user yang offline
             var toRemove = Contacts.Where(c => c.Username != "General" && !users.Contains(c.Username)).ToList();
             foreach (var r in toRemove) Contacts.Remove(r);
         }

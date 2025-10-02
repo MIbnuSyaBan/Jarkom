@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.Json;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -69,7 +68,7 @@ namespace ChatServer
                     switch (msg.Type)
                     {
                         case "msg":
-                            // broadcast ke semua kecuali pengirim → supaya tidak dobel
+                            // broadcast ke semua kecuali pengirim
                             await BroadcastAsync(msg, exceptUsername: username);
                             break;
 
@@ -80,9 +79,14 @@ namespace ChatServer
                             }
                             else
                             {
-                                // hanya kirim ke target, pengirim tidak di-echo (client sudah tampilkan sendiri)
+                                // hanya kirim ke target (pengirim sudah tampilkan sendiri)
                                 await dst.WriteAsync(msg);
                             }
+                            break;
+
+                        case "typing":
+                            // broadcast typing ke semua client lain
+                            await BroadcastAsync(msg, exceptUsername: username);
                             break;
 
                         default:

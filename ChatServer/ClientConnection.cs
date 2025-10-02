@@ -21,9 +21,11 @@ namespace ChatServer
             _stream = _client.GetStream();
         }
 
+        /// <summary>
+        /// Baca payload generic dari stream (pakai prefix length)
+        /// </summary>
         public async Task<T?> ReadAsync<T>() where T : class
         {
-            // read length prefix (int32 LE)
             var lenBuf = new byte[4];
             int r = await _stream.ReadAsync(lenBuf, 0, 4);
             if (r == 0) return null;
@@ -41,9 +43,14 @@ namespace ChatServer
             }
 
             var json = Encoding.UTF8.GetString(data);
+
+            // Deserialisasi wire message (chat / typing / dsb.)
             return JsonSerializer.Deserialize<T>(json);
         }
 
+        /// <summary>
+        /// Kirim payload generic ke client
+        /// </summary>
         public async Task WriteAsync<T>(T payload)
         {
             var json = JsonSerializer.Serialize(payload);
@@ -51,6 +58,21 @@ namespace ChatServer
             var len = BitConverter.GetBytes(data.Length);
             await _stream.WriteAsync(len, 0, 4);
             await _stream.WriteAsync(data, 0, data.Length);
+        }
+
+        /// <summary>
+        /// Shortcut kirim status typing
+        /// </summary>
+        public async Task SendTypingAsync(string username, bool isTyping)
+        {
+            var msg = new
+            {
+                Type = "typing",
+                From = username,
+                Text = isTyping ? "typing..." : ""
+            };
+
+            await WriteAsync(msg);
         }
 
         public void Dispose()

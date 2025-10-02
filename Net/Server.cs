@@ -35,6 +35,7 @@ namespace ChatClient.Net
             _stream = _client.GetStream();
             _reader = new PacketReader(_stream);
 
+            // kirim join info
             await SendAsync(new WireMessage { Type = "join", From = username });
 
             _cts = new CancellationTokenSource();
@@ -68,7 +69,7 @@ namespace ChatClient.Net
             await _stream.WriteAsync(bytes, 0, bytes.Length);
         }
 
-        // reworked: dukung PM via kontak & via /w
+        // kirim chat (msg umum / pm)
         public async Task SendChatAsync(string from, string text, string? pmTo = null)
         {
             if (!string.IsNullOrWhiteSpace(pmTo))
@@ -88,6 +89,18 @@ namespace ChatClient.Net
             }
 
             await SendAsync(new WireMessage { Type = "msg", From = from, Text = text });
+        }
+
+        // 🔥 baru: kirim indikator typing
+        public async Task SendTypingAsync(string from, bool isTyping, string? pmTo = null)
+        {
+            await SendAsync(new WireMessage
+            {
+                Type = "typing",
+                From = from,
+                To = pmTo,
+                Text = isTyping ? "typing..." : ""
+            });
         }
 
         public void Disconnect()

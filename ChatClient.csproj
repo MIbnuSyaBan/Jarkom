@@ -10,9 +10,13 @@
 
   <ItemGroup>
     <Compile Remove="BackEnd\**" />
+    <Compile Remove="ChatServer\**" />
     <EmbeddedResource Remove="BackEnd\**" />
+    <EmbeddedResource Remove="ChatServer\**" />
     <None Remove="BackEnd\**" />
+    <None Remove="ChatServer\**" />
     <Page Remove="BackEnd\**" />
+    <Page Remove="ChatServer\**" />
   </ItemGroup>
 
   <ItemGroup>

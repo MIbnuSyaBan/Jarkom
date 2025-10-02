@@ -17,12 +17,12 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- Tambahan Row baru untuk panel koneksi -->
             <RowDefinition Height="Auto"/>
-            <!-- Row lama: TopBar -->
+            <!-- Connection Panel -->
             <RowDefinition Height="25"/>
-            <!-- Row lama: Content (Sidebar + Chat) -->
+            <!-- TopBar -->
             <RowDefinition/>
+            <!-- Content -->
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -30,7 +30,7 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!-- ===== Connection Panel Baru ===== -->
+        <!-- ===== Connection Panel ===== -->
         <Border Grid.Row="0" Grid.ColumnSpan="2"
                 Background="#EEE"
                 Padding="5" Margin="0,0,0,2">
@@ -112,50 +112,30 @@
                       Grid.Row="1"
                       ItemContainerStyle="{StaticResource ContactCard}"/>
 
-            <StackPanel Grid.Row="2"
-                        Orientation="Horizontal"
-                        Background="{DynamicResource FooterBackgroundBrush}">
-
-                <Border CornerRadius="25"
-                        Width="30" Height="30"
-                        Background="#3bff6f"
-                        Margin="18,0,0,0"/>
-                <StackPanel VerticalAlignment="Center">
-                    <Label Content="Username"
-                           Foreground="{DynamicResource AppPrimaryTextBrush}"
-                           FontWeight="SemiBold"
-                           Margin="0,-5,0,-5"/>
-
-                    <Label Content="Custom Status"
-                           Foreground="{DynamicResource AppSecondaryTextBrush}"
-                           FontWeight="SemiBold"
-                           FontSize="10"
-                           Margin="0,-8,0,-5"/>
-                </StackPanel>
-            </StackPanel>
+      
         </Grid>
 
         <!-- ===== Chat Area ===== -->
         <Grid Grid.Column="1" Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
+                <!-- Chat Top Bar -->
                 <RowDefinition/>
+                <!-- Chat List -->
+                <RowDefinition Height="20"/>
+                <!-- Typing Indicator -->
                 <RowDefinition Height="70"/>
+                <!-- MessageBox -->
             </Grid.RowDefinitions>
 
-            <!-- TopBarChat -->
+            <!-- Chat Top Bar -->
             <Border BorderBrush="{DynamicResource ChatTopBarBrush}"
                     BorderThickness="2">
                 <Grid HorizontalAlignment="Stretch" Margin="8">
-                    <Label Content="@Username"
-                           Foreground="{DynamicResource AppPrimaryTextBrush}"
-                           FontWeight="Bold"
-                           Margin="5,0,5,0"
-                           VerticalAlignment="Center"/>
+                    
 
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Right">
-
                         <Image Width="18" Height="18"
                                RenderOptions.BitmapScalingMode="Fant"
                                Margin="5,0,5,0"
@@ -165,7 +145,6 @@
                                Margin="5,0,5,0"
                                Source="/Icons/camera.png"/>
 
-                        <!-- Toggle Theme Button -->
                         <Button Width="24" Height="24"
                                 Background="Transparent"
                                 BorderThickness="0"
@@ -187,8 +166,16 @@
                       Margin="8,0,0,0"
                       Grid.Row="1"/>
 
+            <!-- Typing indicator -->
+            <TextBlock x:Name="TypingIndicator"
+                       Text="{Binding TypingStatus}"
+                       FontStyle="Italic"
+                       Foreground="Gray"
+                       Margin="12,0,0,5"
+                       Grid.Row="2"/>
+
             <!-- MessageBox -->
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="90"/>
