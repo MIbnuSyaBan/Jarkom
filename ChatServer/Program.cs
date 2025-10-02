@@ -74,7 +74,7 @@ namespace ChatServer
                 user.ClientSocket.Client.Send(broadcastPacket.GetPacketBytes());
             }
 
-            BroadcastMessage($"{disconnectedUser.Username} Disconnected!");
+            //BroadcastMessage($"{disconnectedUser.Username} Disconnected!");
         }
 
     }

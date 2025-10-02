@@ -101,7 +101,7 @@ namespace Jarkom.MVVM.ViewModel
             Contacts = new ObservableCollection<ContactsModel>();
             _server = new Server();
             _server.ConnectedEvent += userConected;
-            _server.MsgReceiveEvent += MessamgeRecieve;
+            _server.MsgReceiveEvent += MessageRecieve;
             _server.UserDisconnectedEvent += RemoveUser;
 
             ConnectCommand = new RelayCommand(
@@ -125,6 +125,14 @@ namespace Jarkom.MVVM.ViewModel
                 o =>
                 {
                     if (string.IsNullOrEmpty(Message)) return;
+                    //var messageModel = new MessageModel
+                    //{
+                    //    Message = Message,
+                    //    Time = DateTime.Now,
+                    //    IsNativeOrigin = true,
+                    //    Username = Username
+                    //};
+                    //Messages.Add(messageModel);
                     _server.SendMessageToServer(Message);
                     Message = "";
                     OnPropertyChanged();
@@ -137,7 +145,7 @@ namespace Jarkom.MVVM.ViewModel
             {
                 Username = _server.PacketReader.ReadMessage(),
                 UID = _server.PacketReader.ReadMessage(),
-                ImageSource = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5_EzMa6j7ppq2LoxtTIDQMNIfZhjYpy2Vfg&s",
+                ImageSource = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5_EzMa6j7ppq2LoxtTIDQMNIfZhjYpy2Vfg&s"
             };
 
             if (!Contacts.Any(x => x.UID == user.UID))
@@ -155,16 +163,35 @@ namespace Jarkom.MVVM.ViewModel
             OnPropertyChanged();
         }
 
-        private void MessamgeRecieve()
+        private void MessageRecieve()
         {
             var msg = _server.PacketReader.ReadMessage();
+            Console.WriteLine($"Message received: {msg}"); // Debug line
+
+            var parts = msg.Split('|');
+            var username = parts.Length > 0 ? parts[0] : "Unknown";
+            var uid = parts.Length > 1 ? parts[1] : "";
+            var messageText = parts.Length > 2 ? parts[2] : msg;
+            var isNative = uid == Contacts.FirstOrDefault(x => x.Username == Username)?.UID;
+            var lastMessage = Messages.LastOrDefault();
+            var isFirstMessage = lastMessage == null || lastMessage.UID != uid;
+
             var message = new MessageModel()
             {
-                Message = msg,
+                Username = username,
+                UID = uid,
+                ImageSource = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5_EzMa6j7ppq2LoxtTIDQMNIfZhjYpy2Vfg&s",
+                Message = messageText,
                 Time = DateTime.Now,
-                IsNativeOrigin = false
+                IsNativeOrigin = isNative,
+                IsNotification = false,
+                FirstMessage = isFirstMessage
             };
-            Application.Current.Dispatcher.Invoke(() => Messages.Add(message));
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Messages.Add(message);
+                Console.WriteLine($"Messages count: {Messages.Count}"); // Debug line
+            });
             OnPropertyChanged();
         }
 

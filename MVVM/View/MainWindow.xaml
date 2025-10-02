@@ -172,7 +172,7 @@
             </Border>
 
             <!-- Chat list -->
-            <ListView ItemsSource="{Binding SelectedContact.Messages}"
+            <ListView ItemsSource="{Binding Messages}"
                       Background="Transparent"
                       BorderThickness="0"
                       ItemContainerStyle="{StaticResource ChatItem}"
